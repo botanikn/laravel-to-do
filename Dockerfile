@@ -23,12 +23,6 @@ COPY . .
 
 RUN composer install --no-dev --no-scripts
 
-# Даем права на storage и bootstrap/cache
-RUN chmod -R 775 storage bootstrap/cache || true
-
-# Применяем миграции
-RUN php artisan migrate --force || true
-
 RUN composer dump-autoload --optimize \
     && php artisan optimize \
     && php artisan config:cache \
