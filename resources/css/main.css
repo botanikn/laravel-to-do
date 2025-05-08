@@ -1,0 +1,58 @@
+.auth_body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.auth_form {
+    width: 30%;
+}
+
+
+
+
+
+.header-link {
+    font-size: large;
+    text-decoration: none;
+    color: black;
+    margin-left: 50px;
+}
+
+.disabled-link {
+    pointer-events: none;
+    color: gray;
+    text-decoration: none;
+    cursor: default;
+}
+
+
+header {
+    border: 2px solid black;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 14px; 
+    height: 45px;
+}
+
+#logout {
+    float: right;
+    margin-right: 10px;
+}
+
+.main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.card {
+    margin: 10px;
+    padding: 10px;
+}
+
+/* .tag-box {
+    border: 1px solid black;
+    font-size: 12px;
+
+} */

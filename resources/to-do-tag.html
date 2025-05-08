@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/main.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <title>To-Do-Tag</title>
+</head>
+<body>
+    <header>
+        <a href="to-do-task.html" class="header-link">Задачи</a>
+        <a href="to-do-tag.html" class="disabled-link header-link">Тэги</a>
+        <button id="logout">Выйти</button>
+    </header>
+    <center><button class="btn btn-success" id="create-tag" data-bs-toggle="modal" data-bs-target="#tagModal">Создать тэг</button></center>
+    <div class="tag-main main">
+
+    </div>
+    
+    <!-- Окно создания тэга -->
+    <div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="tagModalLabel">Создание нового тэга</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="tagForm" class="needs-validation" novalidate>
+                <div class="mb-3">
+                  <label for="tagInputTitle" class="form-label">Название тэга</label>
+                  <input type="text" class="form-control" id="tagInputTitle" required minlength="2" maxlength="20">
+                  <div class="invalid-feedback">
+                    Пожалуйста, введите название тэга (от 2 до 20 символов).
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+              <button type="button" class="btn btn-primary" id="saveTag">Сохранить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!--Окно редактирования тега-->
+    <div class="modal fade" id="tagModalEdit" tabindex="-1" aria-labelledby="tagModalLabelEdit" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="tagModalLabelEdit">Редактирование тэга</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="tagFormEdit" class="needs-validation" novalidate>
+                <div class="mb-3">
+                  <label for="tagInputTitleEdit" class="form-label">Название тэга</label>
+                  <input type="text" class="form-control" id="tagInputTitleEdit" required minlength="2" maxlength="20">
+                  <div class="invalid-feedback">
+                    Пожалуйста, введите название тэга (от 2 до 20 символов).
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+              <button type="button" class="btn btn-primary" id="saveTagEdit">Сохранить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Окно удаления тэга -->
+    <div class="modal fade" id="tagModalDelete" tabindex="-1" aria-labelledby="tagModalDeleteLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="tagModalDeteleLabel">Удаление тэга</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body delete-message">
+            Вы уверены? Все упоминания этого в задачах будут удалены?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-danger" id="deleteTag">Удалить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="js/toDoUtils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>

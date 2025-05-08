@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/main.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <title>To-Do-Task</title>
+</head>
+<body>
+    <header>
+        <a href="to-do-task.html" class="disabled-link header-link">Задачи</a>
+        <a href="to-do-tag.html" class="header-link">Тэги</a>
+        <button id="logout">Выйти</button>
+    </header>
+    <center><button class="btn btn-success" id="create-task" data-bs-toggle="modal" data-bs-target="#taskModal">Создать задачу</button></center>
+    <div class="task-main main">
+
+    </div>
+    <!-- Окно создания задания -->
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="taskModalLabel">Создание новой задачи</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="taskForm" class="needs-validation" novalidate>
+                <div class="mb-3">
+                  <label for="taskInputTitle" class="form-label">Название задачи</label>
+                  <input type="text" class="form-control" id="taskInputTitle" required minlength="3" maxlength="20">
+                  <div class="invalid-feedback">
+                    Введите название задачи (от 3 до 20 символов).
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="taskInputText" class="form-label">Описание</label>
+                  <textarea class="form-control" id="taskInputText" rows="3" maxlength="200"></textarea>
+                  <div class="invalid-feedback">
+                    Описание не должно превышать 200 символов.
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+              <button type="button" class="btn btn-primary" id="saveTask">Сохранить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!--Окно редактирования задачи-->
+    <div class="modal fade" id="taskModalEdit" tabindex="-1" aria-labelledby="taskModalLabelEdit" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="taskModalLabelEdit">Редактирование задачи</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="taskFormEdit" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="taskInputTitleEdit" class="form-label">Название задачи</label>
+                <input type="text" class="form-control" id="taskInputTitleEdit" required minlength="3" maxlength="20">
+                <div class="invalid-feedback">
+                  Введите название задачи (от 3 до 20 символов).
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="taskInputTextEdit" class="form-label">Описание</label>
+                <input type="text" class="form-control" id="taskInputTextEdit" required maxlength="200">
+                <div class="invalid-feedback">
+                  Введите описание задачи (максимум 200 символов).
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-primary" id="saveTaskEdit">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--PopUp для выбора тэга-->
+    <div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="tagModalLabel">Выберите тэг для задачи</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="dropdown mb-3">
+              <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                Выберите вариант
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+
+              </ul>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            <button type="button" class="btn btn-primary" id="tagAdd">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="js/toDoUtils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
