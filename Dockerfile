@@ -19,8 +19,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 
 COPY . .
 
-# Убедитесь, что .env копируется или монтируется
-
 RUN composer install --no-dev --no-scripts
 
 RUN composer dump-autoload --optimize \

@@ -8,6 +8,8 @@
 
 1. git clone https://github.com/botanikn/laravel-to-do.git
 2. В корне проекта docker-compose up -d
+3. docker exec -it backend bash
+4. php artisan migrate
 
 Адрес backend api - localhost:8000
 
