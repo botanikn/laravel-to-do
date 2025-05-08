@@ -10,16 +10,25 @@ class CheckApiToken
 {
     public function handle($request, Closure $next)
     {
-        $token = $request->header('Authorization');
+        $authHeader = $request->header('Authorization');
 
-        if (!$token) {
+        if (!$authHeader) {
             return response()->json(
                 ['message' => 'Не предоставлен токен'],
                 HttpStatus::UNAUTHORIZED
             );
         }
 
-        $token = trim($token);
+        // Проверяем, что заголовок начинается с 'Bearer '
+        if (!str_starts_with($authHeader, 'Bearer ')) {
+            return response()->json(
+                ['message' => 'Некорректный формат токена'],
+                HttpStatus::BAD_REQUEST
+            );
+        }
+
+        // Извлекаем токен из заголовка
+        $token = trim(substr($authHeader, 7)); // длина 'Bearer ' = 7
 
         if (!$token) {
             return response()->json(

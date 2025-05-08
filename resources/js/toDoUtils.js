@@ -25,7 +25,7 @@ $(document).ready(function () {
         $.ajax({
             url,
             method,
-            headers: { 'Authorization': localStorage.getItem('api_token') },
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('api_token') },
             data,
             success,
             error: error || function (res) {

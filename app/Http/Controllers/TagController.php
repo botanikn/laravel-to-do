@@ -21,9 +21,16 @@ class TagController extends Controller
     // Создать новый тег
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|min:3|max:20'
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|min:3|max:20'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'ошибка валидации',
+                'errors' => $e->errors()
+            ], HttpStatus::BAD_REQUEST);
+        }
 
         $user = $request->user();
 
@@ -37,7 +44,8 @@ class TagController extends Controller
     // Найти по id
     public function findById(Request $request, $id)
     {
-        $tag = Tag::find($id);
+        $user = $request->user();
+        $tag = $user->tags()->find($id);
 
         if (!$tag) {
             return response()->json(['message' => 'Тэг не найден'], HttpStatus::NOT_FOUND);
@@ -56,9 +64,16 @@ class TagController extends Controller
             return response()->json(['message' => 'Тэг не найден или нет доступа'], HttpStatus::NOT_FOUND);
         }
 
-        $request->validate([
-            'title' => 'sometimes|required|string|min:3|max:20',
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|min:3|max:20'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'ошибка валидации',
+                'errors' => $e->errors()
+            ], HttpStatus::BAD_REQUEST);
+        }
 
         $tag->update($request->only('title'));
 

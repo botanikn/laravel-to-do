@@ -29,16 +29,23 @@ class TaskController extends Controller
             $task->tags = $tagsByTask->get($task->id, []);
         });
         
-        return response()->json($tasks);
+        return response()->json($tasks, HttpStatus::OK);
     }
 
     // Создать новую задачу
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|min:3|max:20',
-            'text' => 'required|string|max:200',
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|min:3|max:20',
+                'text' => 'required|string|max:200',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'ошибка валидации',
+                'errors' => $e->errors()
+            ], HttpStatus::BAD_REQUEST);
+        }
 
         $user = $request->user();
 
@@ -58,7 +65,7 @@ class TaskController extends Controller
         $task = $user->tasks()->find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found or access denied'], 404);
+            return response()->json(['message' => 'Task not found or access denied'], HttpStatus::NOT_FOUND);
         }
 
         return response()->json($task);
@@ -72,17 +79,24 @@ class TaskController extends Controller
         $task = $user->tasks()->find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found or access denied'], 404);
+            return response()->json(['message' => 'Task not found or access denied'], HttpStatus::NOT_FOUND);
         }
 
-        $request->validate([
-            'title' => 'sometimes|required|string|min:3|max:20',
-            'text' => 'nullable|string|max:200',
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|min:3|max:20',
+                'text' => 'required|string|max:200',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'ошибка валидации',
+                'errors' => $e->errors()
+            ], HttpStatus::BAD_REQUEST);
+        }
 
         $task->update($request->only('title', 'text'));
 
-        return response()->json($task);
+        return response()->json($task, HttpStatus::OK);
     }
 
     // Удалить задачу (только владелец)
@@ -93,7 +107,7 @@ class TaskController extends Controller
         $task = $user->tasks()->find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found or access denied'], 404);
+            return response()->json(['message' => 'Task not found or access denied'], HttpStatus::NOT_FOUND);
         }
 
         $bounds = DB::table('task_tag')
@@ -103,6 +117,6 @@ class TaskController extends Controller
 
         $task->delete();
 
-        return response()->json(['message' => 'Task deleted']);
+        return response()->json(['message' => 'Task deleted'], HttpStatus::OK);
     }
 }
