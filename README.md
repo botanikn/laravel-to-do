@@ -11,7 +11,7 @@
 3. docker exec -it backend bash
 4. php artisan migrate
 
-Адрес backend api - localhost:8000
+Адрес backend api - localhost:8000/api
 
 Адрес клиентского фронтенда - localhost:3000
 
