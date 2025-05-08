@@ -19,7 +19,15 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 
 COPY . .
 
+# Убедитесь, что .env копируется или монтируется
+
 RUN composer install --no-dev --no-scripts
+
+# Даем права на storage и bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache || true
+
+# Применяем миграции
+RUN php artisan migrate --force || true
 
 RUN composer dump-autoload --optimize \
     && php artisan optimize \

@@ -65,7 +65,7 @@ class TaskController extends Controller
         $task = $user->tasks()->find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found or access denied'], HttpStatus::NOT_FOUND);
+            return response()->json(['message' => 'Задача не найдена или нет доступа'], HttpStatus::NOT_FOUND);
         }
 
         return response()->json($task);
@@ -79,7 +79,7 @@ class TaskController extends Controller
         $task = $user->tasks()->find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found or access denied'], HttpStatus::NOT_FOUND);
+            return response()->json(['message' => 'Задача не найдена или нет доступа'], HttpStatus::NOT_FOUND);
         }
 
         try {
@@ -107,7 +107,7 @@ class TaskController extends Controller
         $task = $user->tasks()->find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found or access denied'], HttpStatus::NOT_FOUND);
+            return response()->json(['message' => 'Задача не найдена или нет доступа'], HttpStatus::NOT_FOUND);
         }
 
         $bounds = DB::table('task_tag')
@@ -117,6 +117,6 @@ class TaskController extends Controller
 
         $task->delete();
 
-        return response()->json(['message' => 'Task deleted'], HttpStatus::OK);
+        return response()->json(['message' => 'Задача удалена'], HttpStatus::OK);
     }
 }
