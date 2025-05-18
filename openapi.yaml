@@ -69,6 +69,7 @@ components:
       properties:
         success:
           type: boolean
+          example: true
         token:
           type: string
         message:
@@ -76,6 +77,9 @@ components:
     ErrorResponse:
       type: object
       properties:
+        success:
+            type: boolean
+            example: false
         message:
           type: string
 
@@ -239,7 +243,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/TaskWithoutTags'
         '404':
           description: Не найдено
           content:

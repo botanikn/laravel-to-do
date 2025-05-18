@@ -8,29 +8,20 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Constants\HttpStatus;
+use App\Http\Resources\UserResource;
+use App\Http\Resources\ErrorResource;
+use App\Http\Requests\LoginRequest;
 
 class LoginController extends Controller
 {
     public function login(Request $request)
     {
-        $request->validate([
-            'name'    => 'required|string',
-            'password' => 'required|string',
-        ]);
-
         $user = User::where('name', $request->name)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Неверный логин или пароль'
-            ], HttpStatus::UNAUTHORIZED);
+            return new ErrorResource(message: 'Неверный логин или пароль', statusCode: HttpStatus::UNAUTHORIZED);
         }
 
-        return response()->json([
-            'success' => true,
-            'token'   => $user->api_token,
-            'message' => 'Авторизация успешна',
-        ], HttpStatus::OK);
+        return new UserResource($user, message: 'Авторизация успешна', statusCode: HttpStatus::OK);
     }
 }
