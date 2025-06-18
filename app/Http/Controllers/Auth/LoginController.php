@@ -14,7 +14,7 @@ use App\Http\Requests\LoginRequest;
 
 class LoginController extends Controller
 {
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
         $user = User::where('name', $request->name)->first();
 

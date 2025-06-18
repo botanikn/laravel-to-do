@@ -29,7 +29,7 @@ $(document).ready(function () {
             data,
             success,
             error: error || function (res) {
-                alert(res.responseJSON?.message || 'Неизвестная ошибка');
+                alert(res.data.responseJSON?.message || 'Неизвестная ошибка');
             }
         });
     }
@@ -40,7 +40,7 @@ $(document).ready(function () {
             url: 'http://localhost:8000/api/tags',
             success: function (res) {
                 const $dropdown = $('.dropdown-menu').empty();
-                res.forEach(function (tag) {
+                res.data.forEach(function (tag) {
                     $dropdown.append(`<li><a class="dropdown-item tag-dropdown-item" href="#" data-tag-id="${tag.id}">${tag.title}</a></li>`);
                 });
             }
@@ -53,7 +53,7 @@ $(document).ready(function () {
             url: 'http://localhost:8000/api/tasks',
             success: function (res) {
                 const $main = $('.task-main').empty();
-                res.forEach(function (task) {
+                res.data.forEach(function (task) {
                     let taskHtml = `
                         <div class="card hover-zoom mb-3" data-id="${task.id}" style="cursor: grab;">
                             <div class="card-body">
@@ -64,7 +64,7 @@ $(document).ready(function () {
                                 <div class="task-tags-list mt-2" id="tags_${task.id}">
                                     ${task.tags.map(tag => `
                                         <span class="badge bg-primary me-1">
-                                            ${tag.tag}
+                                            ${tag.title}
                                             <button class="remove_tag btn btn-danger btn-xs btn-sm py-0 px-1 ms-1" id="tag_${tag.id}_${task.id}">x</button>
                                         </span>
                                     `).join('')}
@@ -99,7 +99,7 @@ $(document).ready(function () {
             url: 'http://localhost:8000/api/tags',
             success: function (res) {
                 const $main = $('.tag-main').empty();
-                res.forEach(function (tag) {
+                res.data.forEach(function (tag) {
                     let tagHtml = `
                         <div class="card hover-zoom mb-3" data-id="${tag.id}" style="width: 200px; cursor: grab;">
                             <div class="card-body">
@@ -135,7 +135,7 @@ $(document).ready(function () {
         let taskId = e.currentTarget.id.split('_')[1];
         if (confirm('Вы уверены, что хотите удалить задачу?')) {
             sendAjax({
-                url: `http://localhost:8000/api/task/${taskId}`,
+                url: `http://localhost:8000/api/tasks/${taskId}`,
                 method: 'DELETE',
                 success: function () {
                     taskLoad();
@@ -153,7 +153,7 @@ $(document).ready(function () {
     $('#deleteTag').click(function (e) {
         e.preventDefault();
         sendAjax({
-            url: `http://localhost:8000/api/tag/${tag_delete_id}`,
+            url: `http://localhost:8000/api/tags/${tag_delete_id}`,
             method: 'DELETE',
             success: function () {
                 $('#tagModalDelete').modal('hide');
@@ -166,7 +166,7 @@ $(document).ready(function () {
     $(document).on('click', '.task_edit', function (e) {
         id = e.currentTarget.id.split('_')[1];
         sendAjax({
-            url: `http://localhost:8000/api/task/${id}`,
+            url: `http://localhost:8000/api/tasks/${id}`,
             success: function (task) {
                 $('#taskInputTitleEdit').val(task.title);
                 $('#taskInputTextEdit').val(task.text);
@@ -177,7 +177,7 @@ $(document).ready(function () {
     $(document).on('click', '.tag_edit', function (e) {
         id = e.currentTarget.id.split('_')[1];
         sendAjax({
-            url: `http://localhost:8000/api/tag/${id}`,
+            url: `http://localhost:8000/api/tags/${id}`,
             success: function (tag) {
                 $('#tagInputTitleEdit').val(tag.title);
             }
@@ -212,6 +212,13 @@ $(document).ready(function () {
                 task_id = 0;
                 tag_id = 0;
                 $('#dropdownMenuButton').text('Выберите вариант');
+            },
+            error: function (res) {
+                if (res.responseJSON && res.responseJSON.message === 'Тэг уже привязан к задаче') {
+                    alert('Этот тэг уже привязан к задаче!');
+                } else {
+                    alert(res.responseJSON?.message || 'Неизвестная ошибка');
+                }
             }
         });
     });
@@ -223,7 +230,7 @@ $(document).ready(function () {
         sendAjax({
             url: `http://localhost:8000/api/task_tag`,
             method: 'DELETE',
-            data: { task_id: taskId, id: tagId },
+            data: { task_id: taskId, tag_id: tagId },
             success: function () {
                 taskLoad();
             }
@@ -245,8 +252,8 @@ $(document).ready(function () {
     $('#saveTaskEdit').click(function (e) {
         e.preventDefault();
         validateAndSend('taskFormEdit', {
-            url: `http://localhost:8000/api/task/${id}`,
-            method: 'PUT',
+            url: `http://localhost:8000/api/tasks/${id}`,
+            method: 'PATCH',
             data: {
                 title: $('#taskInputTitleEdit').val(),
                 text: $('#taskInputTextEdit').val()
@@ -264,8 +271,8 @@ $(document).ready(function () {
     $('#saveTagEdit').click(function (e) {
         e.preventDefault();
         validateAndSend('tagFormEdit', {
-            url: `http://localhost:8000/api/tag/${id}`,
-            method: 'PUT',
+            url: `http://localhost:8000/api/tags/${id}`,
+            method: 'PATCH',
             data: { title: $('#tagInputTitleEdit').val() },
             success: function () {
                 $('#tagModalEdit').modal('hide');
@@ -280,7 +287,7 @@ $(document).ready(function () {
     $('#saveTask').click(function (e) {
         e.preventDefault();
         validateAndSend('taskForm', {
-            url: 'http://localhost:8000/api/task',
+            url: 'http://localhost:8000/api/tasks',
             method: 'POST',
             data: {
                 title: $('#taskInputTitle').val(),
@@ -298,7 +305,7 @@ $(document).ready(function () {
     $('#saveTag').click(function (e) {
         e.preventDefault();
         validateAndSend('tagForm', {
-            url: 'http://localhost:8000/api/tag',
+            url: 'http://localhost:8000/api/tags',
             method: 'POST',
             data: { title: $('#tagInputTitle').val() },
             success: function () {

@@ -24,7 +24,8 @@ $(document).ready(function() {
                 method: 'POST',
                 data: data,
                 success: function(res) {
-                    localStorage.setItem('api_token', res.token);
+
+                    localStorage.setItem('api_token', res.data.token);
                     window.location.href = 'to-do-task.html';
                 },
                 error: function(res) {

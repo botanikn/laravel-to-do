@@ -3,52 +3,40 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\TaskTag;
-use Illuminate\Support\Facades\DB;
 use App\Constants\HttpStatus;
+use Illuminate\Support\Facades\DB;
+use App\Http\Requests\TaskTagRequest;
+use App\Http\Resources\SuccessResource;
+use App\Http\Resources\ErrorResource;
 
 class TaskTagController extends Controller
 {
     // Добавить тег задаче
-    public function addTagToTask(Request $request)
+    public function addTagToTask(TaskTagRequest $request)
     {
         $user = $request->user();
-
-        $request->validate([
-            'task_id' => 'required|integer',
-            'tag_id' => 'required|integer'
-        ]);
-
         $task = $user->tasks()->find($request->task_id);
 
         if (!$task) {
-            return response()->json(['message' => 'Задача не найдена или нет доступа'], HttpStatus::NOT_FOUND);
+            return new ErrorResource(message: 'Задача не найдена или нет доступа', statusCode: HttpStatus::NOT_FOUND);
         }
 
-        // Проверка на дублирование связи
-        $exists = TaskTag::where('task_id', $request->task_id)
-            ->where('tag_id', $request->tag_id)
-            ->exists();
-
-        if ($exists) {
-            return response()->json(['message' => 'Тэг уже привязан к задаче'], HttpStatus::BAD_REQUEST);
+        if ($task->tags()->where('tags.id', $request->tag_id)->exists()) {
+            return new ErrorResource(message: 'Тэг уже привязан к задаче', statusCode: HttpStatus::BAD_REQUEST);
         }
 
-        $tag = TaskTag::create([
-            'task_id' => $request->task_id,
-            'tag_id' => $request->tag_id
-        ]);
+        $task->tags()->attach($request->tag_id);
 
-        return response()->json(["success" => true], HttpStatus::CREATED);
+        return new SuccessResource(message: 'Тэг успешно привязан к задаче', statusCode: HttpStatus::CREATED);
     }
 
     // Найти все задачи, к которым привязан тэг (по id)
     public function findTasksByTagId(Request $request, $id)
     {
-        $tasks = DB::table('task_tag')
-            ->join('tasks', 'tasks.id', '=', 'task_tag.task_id')
+        $tasks = DB::table('tag_task')
+            ->join('tasks', 'tasks.id', '=', 'tag_task.task_id')
             ->select('tasks.title')
-            ->where('task_tag.tag_id', '=', $id)
+            ->where('tag_task.tag_id', '=', $id)
             ->groupBy('tasks.title')
             ->get();
 
@@ -56,20 +44,17 @@ class TaskTagController extends Controller
     }
 
     // Удалить тег у задачи (только владелец задачи)
-    public function deleteTagFromTask(Request $request)
+    public function deleteTagFromTask(TaskTagRequest $request)
     {
         $user = $request->user();
-
         $task = $user->tasks()->find($request->task_id);
 
         if (!$task) {
-            return response()->json(['message' => 'Задача не найдена или нет доступа'], HttpStatus::NOT_FOUND);
+            return new ErrorResource(message: 'Задача не найдена или нет доступа', statusCode: HttpStatus::NOT_FOUND);
         }
 
-        $taskTag = TaskTag::find($request->id);
+        $task->tags()->detach($request->tag_id);
 
-        $taskTag->delete();
-
-        return response()->json(["success" => true], HttpStatus::OK);
+        return new SuccessResource(message: 'Тэг отвязан от задачи', statusCode: HttpStatus::OK);
     }
 }

@@ -4,97 +4,79 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Tag;
-use Illuminate\Support\Facades\DB;
 use App\Constants\HttpStatus;
+use App\Http\Resources\TagResource;
+use App\Http\Resources\ErrorResource;
+use App\Http\Resources\SuccessResource;
+use App\Services\TagService;
+use App\Http\Requests\TagRequest;
 
 class TagController extends Controller
 {
+    protected $tagService;
+
+    public function __construct(TagService $tagService)
+    {
+        $this->tagService = $tagService;
+    }
+
     // Получить все теги
     public function index(Request $request)
     {
-        $user = $request->user();
-        $tags = $user->tags()->get();
-
-        return response()->json($tags, HttpStatus::OK);
+        $tags = $this->tagService->getUserTags($request->user());
+        return TagResource::collection($tags)
+            ->response()
+            ->setStatusCode(HttpStatus::OK);
     }
 
     // Создать новый тег
-    public function store(Request $request)
+    public function store(TagRequest $request)
     {
-        try {
-            $request->validate([
-                'title' => 'required|string|min:3|max:20'
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'ошибка валидации',
-                'errors' => $e->errors()
-            ], HttpStatus::BAD_REQUEST);
-        }
-
-        $user = $request->user();
-
-        $tag = $user->tags()->create([
-            'title' => $request->title,
-        ]);
-
-        return response()->json($tag, HttpStatus::CREATED);
+        $tag = $this->tagService->createTag($request->user(), $request->only('title'));
+        return (new TagResource($tag))
+            ->response()
+            ->setStatusCode(HttpStatus::CREATED);
     }
 
     // Найти по id
     public function findById(Request $request, $id)
     {
-        $user = $request->user();
-        $tag = $user->tags()->find($id);
+        $tag = $this->tagService->findTag($request->user(), $id);
 
         if (!$tag) {
-            return response()->json(['message' => 'Тэг не найден'], HttpStatus::NOT_FOUND);
+            return new ErrorResource(message: 'Тэг не найден', statusCode: HttpStatus::NOT_FOUND);
         }
 
-        return response()->json($tag, HttpStatus::OK);
+        return (new TagResource($tag))
+            ->response()
+            ->setStatusCode(HttpStatus::OK);
     }
 
     // Обновить тег
-    public function update(Request $request, $id)
+    public function update(TagRequest $request, $id)
     {
-        $user = $request->user();
-        $tag = $user->tags()->find($id);
+        $tag = $this->tagService->findTag($request->user(), $id);
 
         if (!$tag) {
-            return response()->json(['message' => 'Тэг не найден или нет доступа'], HttpStatus::NOT_FOUND);
+            return new ErrorResource(message: 'Тэг не найден или нет доступа', statusCode: HttpStatus::NOT_FOUND);
         }
 
-        try {
-            $request->validate([
-                'title' => 'required|string|min:3|max:20'
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'ошибка валидации',
-                'errors' => $e->errors()
-            ], HttpStatus::BAD_REQUEST);
-        }
-
-        $tag->update($request->only('title'));
-
-        return response()->json($tag, HttpStatus::OK);
+        $this->tagService->updateTag($tag, $request->only('title'));
+        return (new TagResource($tag))
+            ->response()
+            ->setStatusCode(HttpStatus::OK);
     }
 
     // Удалить тег
     public function destroy(Request $request, $id)
     {
-        $user = $request->user();
-        $tag = $user->tags()->find($id);
+        $tag = $this->tagService->findTag($request->user(), $id);
 
         if (!$tag) {
-            return response()->json(['message' => 'Тэг не найден или нет доступа'], HttpStatus::NOT_FOUND);
+            return new ErrorResource(message: 'Тэг не найден или нет доступа', statusCode: HttpStatus::NOT_FOUND);
         }
 
-        // Удалить связи с задачами
-        DB::table('task_tag')->where('tag_id', $id)->delete();
-
-        $tag->delete();
-
-        return response()->json(['message' => 'Тэг удалён'], HttpStatus::OK);
+        $this->tagService->deleteTag($tag);
+        return new SuccessResource(message: 'Тэг удалён', statusCode: HttpStatus::OK);
     }
 }
