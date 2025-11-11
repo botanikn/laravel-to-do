@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Auth\AuthService;
+use App\Services\TaskService;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -14,9 +16,15 @@ use App\Http\Requests\LoginRequest;
 
 class LoginController extends Controller
 {
+    public function __construct(
+        private readonly AuthService $authService,
+    )
+    {
+
+    }
     public function login(LoginRequest $request)
     {
-        $user = User::where('name', $request->name)->first();
+        $user = $this->authService->getUser($request->email);
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return new ErrorResource(message: 'Неверный логин или пароль', statusCode: HttpStatus::UNAUTHORIZED);
