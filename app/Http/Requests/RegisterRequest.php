@@ -2,12 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use App\Constants\HttpStatus;
-
-class RegisterRequest extends FormRequest
+class RegisterRequest extends CustomFromRequest
 {
     public function authorize(): bool
     {

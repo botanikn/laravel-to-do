@@ -20,7 +20,6 @@ class LoginController extends Controller
         private readonly AuthService $authService,
     )
     {
-
     }
     public function login(LoginRequest $request)
     {
