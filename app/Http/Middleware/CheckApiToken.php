@@ -19,7 +19,7 @@ class CheckApiToken
             );
         }
 
-        // Проверяем, что заголовок начинается с 'Bearer '
+        // Проверяем, что заголовок не начинается с 'Bearer '
         if (!str_starts_with($authHeader, 'Bearer ')) {
             return response()->json(
                 ['message' => 'Некорректный формат токена'],
