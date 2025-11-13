@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Tag;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -65,8 +66,18 @@ class TaskRepository
         return $task->delete();
     }
 
-    public function syncTags(Model $task, array $tagIds): void
+    public function syncTags(Task $task, array $tagIds): void
     {
         $task->tags()->sync($tagIds);
+    }
+
+    public function attachTagToTask(Task $task, int $tagId): void
+    {
+        $task->tags()->attach($tagId);
+    }
+
+    public function deleteTagFromTask(Task $task, int $tagId): void
+    {
+        $task->tags()->detach($tagId);
     }
 }

@@ -106,7 +106,6 @@ class TaskController extends Controller
      * Remove task
      * @param Request $request
      * @param int $id
-     *
      */
     public function destroy(Request $request, int $id): SuccessResource|ErrorResource
     {
@@ -122,6 +121,38 @@ class TaskController extends Controller
             }
 
             return new SuccessResource('Task deleted successfully', HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function attach(Request $request): SuccessResource|ErrorResource
+    {
+        try {
+            $taskId = (int) $request->taskId;
+            $tagId = (int) $request->tagId;
+            $task = $this->taskService->findTask($request->user(), $taskId);
+            if (!$task) {
+                return $this->taskNotFoundResponse();
+            }
+            $this->taskService->attachTagToTask($task, $tagId);
+            return new SuccessResource('Tag was successfully attached', HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function detach(Request $request): SuccessResource|ErrorResource
+    {
+        try {
+            $taskId = (int) $request->taskId;
+            $tagId = (int) $request->tagId;
+            $task = $this->taskService->findTask($request->user(), $taskId);
+            if (!$task) {
+                $this->taskNotFoundResponse();
+            }
+            $this->taskService->deleteTagFromTask($task, $tagId);
+            return new SuccessResource('Tag was successfully unattached', HttpStatus::OK);
         } catch (\Exception $e) {
             return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
         }

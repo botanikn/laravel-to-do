@@ -1,17 +1,17 @@
 $(document).ready(function () {
-    //  Проверка авторизации 
+    //  Проверка авторизации
     if (!localStorage.getItem('api_token')) {
         window.location.href = 'index.html';
         return;
     }
 
-    //  Глобальные переменные 
+    //  Глобальные переменные
     let id = 0;
     let tag_delete_id = 0;
     let task_id = 0;
     let tag_id = 0;
 
-    //  Навигация и начальная загрузка 
+    //  Навигация и начальная загрузка
     const pathname = window.location.pathname;
     if (pathname.endsWith('/to-do-task.html')) {
         taskLoad();
@@ -20,7 +20,7 @@ $(document).ready(function () {
         tagLoad();
     }
 
-    //  Универсальная функция для AJAX-запросов 
+    //  Универсальная функция для AJAX-запросов
     function sendAjax({ url, method = 'GET', data = {}, success, error }) {
         $.ajax({
             url,
@@ -34,7 +34,7 @@ $(document).ready(function () {
         });
     }
 
-    //  Загрузка всех тэгов для выпадающего списка 
+    //  Загрузка всех тэгов для выпадающего списка
     function tagListLoad() {
         sendAjax({
             url: 'http://localhost:8000/api/tags',
@@ -47,7 +47,7 @@ $(document).ready(function () {
         });
     }
 
-    //  Загрузка всех задач с drag & drop 
+    //  Загрузка всех задач с drag & drop
     function taskLoad() {
         sendAjax({
             url: 'http://localhost:8000/api/tasks',
@@ -93,7 +93,7 @@ $(document).ready(function () {
         });
     }
 
-    //  Загрузка всех тэгов с drag & drop 
+    //  Загрузка всех тэгов с drag & drop
     function tagLoad() {
         sendAjax({
             url: 'http://localhost:8000/api/tags',
@@ -129,7 +129,7 @@ $(document).ready(function () {
         });
     }
 
-    //  Удаление задачи 
+    //  Удаление задачи
     $(document).on('click', '.task_remove', function (e) {
         e.preventDefault();
         let taskId = e.currentTarget.id.split('_')[1];
@@ -144,7 +144,7 @@ $(document).ready(function () {
         }
     });
 
-    //  Удаление тэга и всех его связей 
+    //  Удаление тэга и всех его связей
     $(document).on('click', '.tag_remove', function (e) {
         tag_delete_id = e.currentTarget.id.split('_')[1];
         $('#tagModalDelete').modal('show');
@@ -162,7 +162,7 @@ $(document).ready(function () {
         });
     });
 
-    //  Получение данных для редактирования задачи и тэга 
+    //  Получение данных для редактирования задачи и тэга
     $(document).on('click', '.task_edit', function (e) {
         id = e.currentTarget.id.split('_')[1];
         sendAjax({
@@ -184,7 +184,7 @@ $(document).ready(function () {
         });
     });
 
-    //  Добавление тэга к задаче 
+    //  Добавление тэга к задаче
     $(document).on('click', '.add', function (e) {
         task_id = e.currentTarget.id;
         $('#tagModal').modal('show');
@@ -203,9 +203,9 @@ $(document).ready(function () {
             return;
         }
         sendAjax({
-            url: `http://localhost:8000/api/task_tag`,
+            url: `http://localhost:8000/api/attach-tag`,
             method: 'POST',
-            data: { task_id, tag_id },
+            data: { taskId: parseInt(task_id), tagId: parseInt(tag_id) },
             success: function () {
                 $('#tagModal').modal('hide');
                 taskLoad();
@@ -223,21 +223,21 @@ $(document).ready(function () {
         });
     });
 
-    //  Удаление тэга у задачи 
+    //  Удаление тэга у задачи
     $(document).on('click', '.remove_tag', function (e) {
         e.preventDefault();
         let [_, tagId, taskId] = e.currentTarget.id.split('_');
         sendAjax({
-            url: `http://localhost:8000/api/task_tag`,
+            url: `http://localhost:8000/api/detach-tag`,
             method: 'DELETE',
-            data: { task_id: taskId, tag_id: tagId },
+            data: { taskId: parseInt(taskId), tagId: parseInt(tagId) },
             success: function () {
                 taskLoad();
             }
         });
     });
 
-    //  Универсальная функция для валидации и отправки формы 
+    //  Универсальная функция для валидации и отправки формы
     function validateAndSend(formId, ajaxOptions) {
         const form = document.getElementById(formId);
         if (!form.checkValidity()) {
@@ -248,7 +248,7 @@ $(document).ready(function () {
         sendAjax(ajaxOptions);
     }
 
-    //  Редактирование задачи 
+    //  Редактирование задачи
     $('#saveTaskEdit').click(function (e) {
         e.preventDefault();
         validateAndSend('taskFormEdit', {
@@ -267,7 +267,7 @@ $(document).ready(function () {
         });
     });
 
-    //  Редактирование тэга 
+    //  Редактирование тэга
     $('#saveTagEdit').click(function (e) {
         e.preventDefault();
         validateAndSend('tagFormEdit', {
@@ -283,7 +283,7 @@ $(document).ready(function () {
         });
     });
 
-    //  Создание задачи 
+    //  Создание задачи
     $('#saveTask').click(function (e) {
         e.preventDefault();
         validateAndSend('taskForm', {
@@ -301,7 +301,7 @@ $(document).ready(function () {
         });
     });
 
-    //  Создание тэга 
+    //  Создание тэга
     $('#saveTag').click(function (e) {
         e.preventDefault();
         validateAndSend('tagForm', {
@@ -316,7 +316,7 @@ $(document).ready(function () {
         });
     });
 
-    //  Выход 
+    //  Выход
     $('#logout').click(function () {
         localStorage.removeItem('api_token');
         window.location.reload();

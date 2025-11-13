@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TaskService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Constants\HttpStatus;
@@ -13,12 +14,9 @@ use App\Http\Requests\TagRequest;
 
 class TagController extends Controller
 {
-    protected $tagService;
-
-    public function __construct(TagService $tagService)
-    {
-        $this->tagService = $tagService;
-    }
+    public function __construct(
+        private readonly TagService $tagService
+    ) {}
 
     /**
      * Get all users tags

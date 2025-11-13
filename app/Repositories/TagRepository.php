@@ -22,13 +22,13 @@ class TagRepository
     /**
      * Create new tag
      * @param User $user
-     * @param array $data
-     * @return Model
+     * @param string $data
+     * @return Tag
      */
-    public function createTag(User $user, array $data): Model
+    public function createTag(User $user, string $data): Tag
     {
         return $user->tags()->create([
-            'title' => $data['title'],
+            'title' => $data,
         ]);
     }
 
@@ -36,9 +36,9 @@ class TagRepository
      * Find one tag by it id
      * @param User $user
      * @param int $id
-     * @return Model|null
+     * @return Tag|null
      */
-    public function findUserTag(User $user, int $id): ?Model
+    public function findUserTag(User $user, int $id): ?Tag
     {
         return $user->tags()->find($id);
     }

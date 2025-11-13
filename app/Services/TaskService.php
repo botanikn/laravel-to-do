@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Tag;
 use App\Models\Task;
 use App\Models\User;
 use App\Repositories\TaskRepository;
@@ -32,7 +33,7 @@ class TaskService
      * @param array $data
      * @return Task
      */
-    public function createTask(User $user, array $data): Model
+    public function createTask(User $user, array $data): Task
     {
         $task = $this->taskRepository->createTask($user, $data);
 
@@ -50,7 +51,7 @@ class TaskService
      * @param int $taskId
      * @return Task|null
      */
-    public function findTask(User $user, int $taskId): ?Model
+    public function findTask(User $user, int $taskId): ?Task
     {
         return $this->taskRepository->findUserTask($user, $taskId);
     }
@@ -80,5 +81,15 @@ class TaskService
     public function deleteTask(Task $task): bool
     {
         return $this->taskRepository->deleteTask($task);
+    }
+
+    public function attachTagToTask(Task $task, int $tagId): void
+    {
+        $this->taskRepository->attachTagToTask($task, $tagId);
+    }
+
+    public function deleteTagFromTask(Task $task, int $tagId): void
+    {
+        $this->taskRepository->deleteTagFromTask($task, $tagId);
     }
 }
