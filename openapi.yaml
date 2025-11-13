@@ -13,57 +13,42 @@ components:
       type: apiKey
       in: header
       name: Authorization
+      description: Bearer токен в формате "Bearer {token}"
 
   schemas:
-    TaskWithoutTags:
-      type: object
-      properties:
-        title:
-          type: string
-        text:
-          type: string
-        user_id:
-          type: integer
-        id:
-          type: integer
-    Task:
+    TaskWithTags:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         title:
           type: string
+          example: "Моя задача"
         text:
           type: string
+          example: "Описание задачи"
         tags:
           type: array
           items:
-            $ref: '#/components/schemas/TagRef'
+            $ref: '#/components/schemas/Tag'
     Tag:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         title:
           type: string
-        user_id:
-          type: integer
-    TagRef:
-      type: object
-      properties:
-        tag:
+          example: "Важное"
+        created_at:
           type: string
-        tag_id:
-          type: integer
-        id:
-          type: integer
-    TaskTag:
-      type: object
-      properties:
-        task_id:
-          type: integer
-        tag_id:
-          type: integer
+          format: date-time
+          example: "2024-01-01T12:00:00.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00.000000Z"
     AuthResponse:
       type: object
       properties:
@@ -72,25 +57,32 @@ components:
           example: true
         token:
           type: string
+          example: "abc123def456..."
         message:
           type: string
+          example: "Авторизация успешна"
     ErrorResponse:
       type: object
       properties:
         success:
-            type: boolean
-            example: false
+          type: boolean
+          example: false
         message:
           type: string
-
-security:
-  - ApiTokenAuth: []
+          example: "Ошибка сервера"
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Tag was successfully attached"
 
 paths:
   /login:
     post:
       summary: Авторизация пользователя
       tags: [Auth]
+      security: []
       requestBody:
         required: true
         content:
@@ -98,11 +90,15 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                email:
                   type: string
+                  format: email
+                  example: "user@example.com"
                 password:
                   type: string
-              required: [name, password]
+                  format: password
+                  example: "password123"
+              required: [email, password]
       responses:
         '200':
           description: Успешная авторизация
@@ -116,11 +112,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /register:
     post:
       summary: Регистрация пользователя
       tags: [Auth]
+      security: []
       requestBody:
         required: true
         content:
@@ -130,11 +133,17 @@ paths:
               properties:
                 name:
                   type: string
+                  minLength: 1
+                  example: "Иван Иванов"
                 email:
                   type: string
                   format: email
+                  example: "user@example.com"
                 password:
                   type: string
+                  format: password
+                  minLength: 6
+                  example: "password123"
               required: [name, email, password]
       responses:
         '201':
@@ -143,6 +152,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Ошибка сервера
           content:
@@ -153,108 +168,30 @@ paths:
   /tasks:
     get:
       summary: Получить все задачи пользователя
-      tags: [Task]
+      tags: [Tasks]
       security:
         - ApiTokenAuth: []
       responses:
         '200':
-          description: Список задач
+          description: Список задач с тегами
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Task'
-
-  /task/{id}:
-    get:
-      summary: Получить задачу по id
-      tags: [Task]
-      security:
-        - ApiTokenAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Задача
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Task'
-        '404':
-          description: Не найдено
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskWithTags'
+        '500':
+          description: Ошибка сервера
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    put:
-      summary: Обновить задачу
-      tags: [Task]
-      security:
-        - ApiTokenAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                text:
-                  type: string
-      responses:
-        '200':
-          description: Задача обновлена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaskWithoutTags'
-        '404':
-          description: Не найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    delete:
-      summary: Удалить задачу
-      tags: [Task]
-      security:
-        - ApiTokenAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Успешное удаление
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaskWithoutTags'
-        '404':
-          description: Не найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /task:
     post:
       summary: Создать задачу
-      tags: [Task]
+      tags: [Tasks]
       security:
         - ApiTokenAuth: []
       requestBody:
@@ -266,8 +203,18 @@ paths:
               properties:
                 title:
                   type: string
+                  minLength: 3
+                  maxLength: 20
+                  example: "Моя задача"
                 text:
                   type: string
+                  maxLength: 200
+                  example: "Описание задачи"
+                tags:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
               required: [title, text]
       responses:
         '201':
@@ -275,9 +222,227 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskWithoutTags'
-        '400':
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TaskWithTags'
+        '422':
           description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/{id}:
+    get:
+      summary: Получить задачу по id
+      tags: [Tasks]
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Задача с тегами
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TaskWithTags'
+        '404':
+          description: Задача не найдена или доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Обновить задачу
+      tags: [Tasks]
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  example: "Обновленная задача"
+                text:
+                  type: string
+                  maxLength: 200
+                  example: "Обновленное описание"
+                tags:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2]
+              required: [title, text]
+      responses:
+        '200':
+          description: Задача обновлена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TaskWithTags'
+        '404':
+          description: Задача не найдена или доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Удалить задачу
+      tags: [Tasks]
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Задача успешно удалена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Задача не найдена или доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /attach-tag:
+    post:
+      summary: Привязать тег к задаче
+      tags: [TaskTags]
+      security:
+        - ApiTokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                taskId:
+                  type: integer
+                  example: 1
+                tagId:
+                  type: integer
+                  example: 2
+              required: [taskId, tagId]
+      responses:
+        '200':
+          description: Тег успешно привязан к задаче
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Задача не найдена или доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /detach-tag:
+    delete:
+      summary: Отвязать тег от задачи
+      tags: [TaskTags]
+      security:
+        - ApiTokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                taskId:
+                  type: integer
+                  example: 1
+                tagId:
+                  type: integer
+                  example: 2
+              required: [taskId, tagId]
+      responses:
+        '200':
+          description: Тег успешно отвязан от задачи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Задача не найдена или доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
           content:
             application/json:
               schema:
@@ -286,7 +451,7 @@ paths:
   /tags:
     get:
       summary: Получить все теги пользователя
-      tags: [Tag]
+      tags: [Tags]
       security:
         - ApiTokenAuth: []
       responses:
@@ -295,97 +460,21 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Tag'
-
-  /tag/{id}:
-    get:
-      summary: Получить тег по id
-      tags: [Tag]
-      security:
-        - ApiTokenAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Тег
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tag'
-        '404':
-          description: Не найдено
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+        '500':
+          description: Ошибка сервера
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    put:
-      summary: Обновить тег
-      tags: [Tag]
-      security:
-        - ApiTokenAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-      responses:
-        '200':
-          description: Тег обновлён
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tag'
-        '404':
-          description: Не найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    delete:
-      summary: Удалить тег
-      tags: [Tag]
-      security:
-        - ApiTokenAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Тег удалён
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Не найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /tag:
     post:
       summary: Создать тег
-      tags: [Tag]
+      tags: [Tags]
       security:
         - ApiTokenAuth: []
       requestBody:
@@ -397,6 +486,9 @@ paths:
               properties:
                 title:
                   type: string
+                  minLength: 3
+                  maxLength: 20
+                  example: "Важное"
               required: [title]
       responses:
         '201':
@@ -404,18 +496,27 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tag'
-        '400':
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tag'
+        '422':
           description: Ошибка валидации
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /tasks_tags/{id}:
+  /tags/{id}:
     get:
-      summary: Получить задачи, связанные с тегом
-      tags: [TaskTag]
+      summary: Получить тег по id
+      tags: [Tags]
       security:
         - ApiTokenAuth: []
       parameters:
@@ -424,25 +525,41 @@ paths:
           required: true
           schema:
             type: integer
+          example: 1
       responses:
         '200':
-          description: Список задач
+          description: Тег
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    title:
-                      type: string
-
-  /task_tag:
-    post:
-      summary: Привязать тег к задаче
-      tags: [TaskTag]
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tag'
+        '404':
+          description: Тег не найден или доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Обновить тег
+      tags: [Tags]
       security:
         - ApiTokenAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
       requestBody:
         required: true
         content:
@@ -450,63 +567,67 @@ paths:
             schema:
               type: object
               properties:
-                task_id:
-                  type: integer
-                tag_id:
-                  type: integer
-              required: [task_id, tag_id]
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  example: "Обновленный тег"
+              required: [title]
       responses:
-        '201':
-          description: Связь создана
+        '200':
+          description: Тег обновлен
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-        '400':
-          description: Ошибка (например, связь уже существует)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                  data:
+                    $ref: '#/components/schemas/Tag'
         '404':
-          description: Не найдено (например, задача не найдена)
+          description: Тег не найден или доступ запрещен
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
-      summary: Удалить тег у задачи
-      tags: [TaskTag]
+      summary: Удалить тег
+      tags: [Tags]
       security:
         - ApiTokenAuth: []
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                task_id:
-                  type: integer
-                tag_id:
-                  type: integer
-              required: [task_id, tag_id]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
       responses:
         '200':
-          description: Связь удалена
+          description: Тег успешно удален
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
+                $ref: '#/components/schemas/SuccessResponse'
         '404':
-          description: Не найдено (например, задача или связь не найдена)
+          description: Тег не найден или доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
           content:
             application/json:
               schema:
