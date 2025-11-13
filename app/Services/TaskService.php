@@ -1,54 +1,84 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Task;
-use App\Models\Tag;
+use App\Models\User;
+use App\Repositories\TaskRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class TaskService
 {
-    public function getUserTasks($user): Collection
+    public function __construct(
+        private readonly TaskRepository $taskRepository
+    ) {}
+
+    /**
+     * Get all tasks for a user
+     * @param User $user
+     * @return Collection
+     */
+    public function getUserTasks(User $user): Collection
     {
-        return $user->tasks()->with('tags')->get();
+        return $this->taskRepository->getUserTasks($user);
     }
 
-    public function createTask($user, array $data): Task
+    /**
+     * Create a new task for a user
+     * @param User $user
+     * @param array $data
+     * @return Task
+     */
+    public function createTask(User $user, array $data): Model
     {
-        return $user->tasks()->create([
-            'title' => $data['title'],
-            'text' => $data['text'],
-        ]);
+        $task = $this->taskRepository->createTask($user, $data);
+
+        if (isset($data['tags'])) {
+            $this->taskRepository->syncTags($task, $data['tags']);
+            $task->load('tags');
+        }
+
+        return $task;
     }
 
-    public function findTask($user, $id): ?Task
+    /**
+     * Find a task by ID for a specific user
+     * @param User $user
+     * @param int $taskId
+     * @return Task|null
+     */
+    public function findTask(User $user, int $taskId): ?Model
     {
-        return $user->tasks()->with('tags')->find($id);
+        return $this->taskRepository->findUserTask($user, $taskId);
     }
 
+    /**
+     * Update a task
+     * @param Task $task
+     * @param array $data
+     * @return bool
+     */
     public function updateTask(Task $task, array $data): bool
     {
-        return $task->update($data);
+        $updated = $this->taskRepository->updateTask($task, $data);
+
+        if ($updated && isset($data['tags'])) {
+            $this->taskRepository->syncTags($task, $data['tags']);
+        }
+
+        return $updated;
     }
 
+    /**
+     * Delete a task
+     * @param Task $task
+     * @return bool
+     */
     public function deleteTask(Task $task): bool
     {
-        return $task->delete();
+        return $this->taskRepository->deleteTask($task);
     }
-
-    public function syncTags(Task $task, array $tagIds): void
-    {
-        $task->tags()->sync($tagIds);
-    }
-
-    public function attachTag(Task $task, Tag $tag): void
-    {
-        $task->tags()->attach($tag->id);
-    }
-
-    public function detachTag(Task $task, Tag $tag): void
-    {
-        $task->tags()->detach($tag->id);
-    }
-} 
+}

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Tag;
 use App\Constants\HttpStatus;
 use App\Http\Resources\TagResource;
 use App\Http\Resources\ErrorResource;
@@ -20,63 +20,113 @@ class TagController extends Controller
         $this->tagService = $tagService;
     }
 
-    // Получить все теги
-    public function index(Request $request)
+    /**
+     * Get all users tags
+     * @param Request $request
+     * @return JsonResponse|ErrorResource
+     */
+    public function index(Request $request): JsonResponse|ErrorResource
     {
-        $tags = $this->tagService->getUserTags($request->user());
-        return TagResource::collection($tags)
-            ->response()
-            ->setStatusCode(HttpStatus::OK);
-    }
-
-    // Создать новый тег
-    public function store(TagRequest $request)
-    {
-        $tag = $this->tagService->createTag($request->user(), $request->only('title'));
-        return (new TagResource($tag))
-            ->response()
-            ->setStatusCode(HttpStatus::CREATED);
-    }
-
-    // Найти по id
-    public function findById(Request $request, $id)
-    {
-        $tag = $this->tagService->findTag($request->user(), $id);
-
-        if (!$tag) {
-            return new ErrorResource(message: 'Тэг не найден', statusCode: HttpStatus::NOT_FOUND);
+        try {
+            $tags = $this->tagService->getUserTags($request->user());
+            return TagResource::collection($tags)
+                ->response()
+                ->setStatusCode(HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
         }
-
-        return (new TagResource($tag))
-            ->response()
-            ->setStatusCode(HttpStatus::OK);
     }
 
-    // Обновить тег
-    public function update(TagRequest $request, $id)
+    /**
+     * Store new tag
+     * @param TagRequest $request
+     * @return TagResource|ErrorResource
+     */
+    public function store(TagRequest $request): TagResource|ErrorResource
     {
-        $tag = $this->tagService->findTag($request->user(), $id);
-
-        if (!$tag) {
-            return new ErrorResource(message: 'Тэг не найден или нет доступа', statusCode: HttpStatus::NOT_FOUND);
+        try {
+            $tag = $this->tagService->createTag($request->user(), $request->title);
+            return new TagResource($tag, HttpStatus::CREATED);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
         }
-
-        $this->tagService->updateTag($tag, $request->only('title'));
-        return (new TagResource($tag))
-            ->response()
-            ->setStatusCode(HttpStatus::OK);
     }
 
-    // Удалить тег
-    public function destroy(Request $request, $id)
+    /**
+     * Get one task by id
+     * @param Request $request
+     * @param int $id
+     * @return TagResource|ErrorResource
+     */
+    public function show(Request $request, int $id): TagResource|ErrorResource
     {
-        $tag = $this->tagService->findTag($request->user(), $id);
+        try {
+            $tag = $this->tagService->findTag($request->user(), $id);
 
-        if (!$tag) {
-            return new ErrorResource(message: 'Тэг не найден или нет доступа', statusCode: HttpStatus::NOT_FOUND);
+            if (!$tag) {
+                $this->tagNotFoundResponse();
+            }
+
+            return new TagResource($tag, HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
         }
+    }
 
-        $this->tagService->deleteTag($tag);
-        return new SuccessResource(message: 'Тэг удалён', statusCode: HttpStatus::OK);
+    /**
+     * Update one task by id
+     * @param TagRequest $request
+     * @param int $id
+     * @return TagResource|ErrorResource
+     */
+    public function update(TagRequest $request, int $id): TagResource|ErrorResource
+    {
+        try {
+            $tag = $this->tagService->findTag($request->user(), $id);
+
+            if (!$tag) {
+                $this->tagNotFoundResponse();
+            }
+
+            if (!$this->tagService->updateTag($tag, $request->only('title'))) {
+                return new ErrorResource('Failed to update tag', HttpStatus::INTERNAL_SERVER_ERROR);
+            }
+            return new TagResource($tag, HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Delete one task by id
+     * @param Request $request
+     * @param int $id
+     * @return SuccessResource|ErrorResource
+     */
+    public function destroy(Request $request, int $id): SuccessResource|ErrorResource
+    {
+        try {
+            $tag = $this->tagService->findTag($request->user(), $id);
+
+            if (!$tag) {
+                $this->tagNotFoundResponse();
+            }
+
+            if (!$this->tagService->deleteTag($tag)) {
+                return new ErrorResource('Failed to delete tag', HttpStatus::INTERNAL_SERVER_ERROR);
+            }
+            return new SuccessResource('Тэг удалён', HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Return a standardized "tag not found" response
+     * @return ErrorResource
+     */
+    private function tagNotFoundResponse(): ErrorResource
+    {
+        return new ErrorResource('Tag not found or access denied', HttpStatus::NOT_FOUND);
     }
 }

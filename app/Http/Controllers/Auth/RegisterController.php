@@ -21,7 +21,6 @@ class RegisterController extends Controller
     {
         try {
             $user = $this->authService->createUser($request);
-
             return new UserResource($user, message: 'Регистрация успешна', statusCode: HttpStatus::CREATED);
         }
         catch (\Exception $e) {

@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class TaskRequest extends FormRequest
+class TaskRequest extends CustomFromRequest
 {
     public function authorize(): bool
     {
@@ -16,6 +14,8 @@ class TaskRequest extends FormRequest
         return [
             'title' => 'required|string|min:3|max:20',
             'text' => 'required|string|max:200',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
         ];
     }
 
@@ -23,10 +23,13 @@ class TaskRequest extends FormRequest
     {
         return [
             'title.required' => 'Поле title обязательно для заполнения.',
-            'text.required' => 'Поле text обязательно для заполнения.',
+            'title.string' => 'Поле title должно быть string.',
             'title.min' => 'Поле title не может содержать меньше 3 символов.',
             'title.max' => 'Поле title не может содержать больше 20 символов.',
+            'text.required' => 'Поле text обязательно для заполнения.',
             'text.max' => 'Поле text не может содержать больше 200 символов.',
+            'text.string' => 'Поле text должно быть string.',
+            'tags.*.exists' => 'Среди тэгов имеются несуществующие.'
         ];
     }
 }

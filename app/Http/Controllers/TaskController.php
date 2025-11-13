@@ -1,79 +1,138 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Task;
 use App\Constants\HttpStatus;
-use App\Http\Resources\TaskWithTagsResource;
-use App\Http\Resources\TaskResource;
+use App\Http\Requests\TaskRequest;
 use App\Http\Resources\ErrorResource;
 use App\Http\Resources\SuccessResource;
-use App\Http\Requests\TaskRequest;
+use App\Http\Resources\TaskWithTagsResource;
 use App\Services\TaskService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    protected $taskService;
+    public function __construct(
+        private readonly TaskService $taskService
+    ) {}
 
-    public function __construct(TaskService $taskService)
+    /**
+     * Get all tasks for the authenticated user
+     * @param Request $request
+     * @return JsonResponse|ErrorResource
+     */
+    public function index(Request $request): JsonResponse|ErrorResource
     {
-        $this->taskService = $taskService;
-    }
-
-    // Получить все задачи текущего пользователя
-    public function index(Request $request)
-    {
-        $tasks = $this->taskService->getUserTasks($request->user());
-        return TaskWithTagsResource::collection($tasks)
-            ->response()
-            ->setStatusCode(HttpStatus::OK);
-    }
-
-    // Создать новую задачу
-    public function store(TaskRequest $request)
-    {
-        $task = $this->taskService->createTask($request->user(), $request->only(['title', 'text']));
-        return new TaskResource($task, statusCode: HttpStatus::CREATED);
-    }
-
-    // Найти по id
-    public function findById(Request $request, $id)
-    {
-        $task = $this->taskService->findTask($request->user(), $id);
-
-        if (!$task) {
-            return new ErrorResource(message: "Задача не найдена или нет доступа", statusCode: HttpStatus::NOT_FOUND);
+        try {
+            $tasks = $this->taskService->getUserTasks($request->user());
+            return TaskWithTagsResource::collection($tasks)
+                ->response()
+                ->setStatusCode(HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
         }
-
-        return (new TaskWithTagsResource($task))
-            ->response()
-            ->setStatusCode(HttpStatus::OK);
     }
 
-    // Обновить задачу
-    public function update(TaskRequest $request, $id)
+    /**
+     * Store new task
+     * @param TaskRequest $request
+     * @return TaskWithTagsResource|ErrorResource
+     */
+    public function store(TaskRequest $request): TaskWithTagsResource|ErrorResource
     {
-        $task = $this->taskService->findTask($request->user(), $id);
+        try {
+            $task = $this->taskService->createTask(
+                $request->user(),
+                $request->validated()
+            );
 
-        if (!$task) {
-            return new ErrorResource(message: "Задача не найдена или нет доступа", statusCode: HttpStatus::NOT_FOUND);
+            // TODO: Возможно сделать возвращение только id созданной task
+            return new TaskWithTagsResource($task, HttpStatus::CREATED);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
         }
-
-        $this->taskService->updateTask($task, $request->only('title', 'text'));
-        return new TaskResource($task, statusCode: HttpStatus::OK);
     }
 
-    // Удалить задачу (только владелец)
-    public function destroy(Request $request, $id)
+    /**
+     * Get one task by id
+     * @param Request $request
+     * @param int $id
+     * @return TaskWithTagsResource|ErrorResource
+     */
+    public function show(Request $request, int $id): TaskWithTagsResource|ErrorResource
     {
-        $task = $this->taskService->findTask($request->user(), $id);
+        try {
+            $task = $this->taskService->findTask($request->user(), $id);
+            if (!$task) {
+                // TODO: Возможно вынести данный функционал в другой класс, например, ResponseHelper
+                return $this->taskNotFoundResponse();
+            }
 
-        if (!$task) {
-            return new ErrorResource(message: 'Задача не найдена или нет доступа', statusCode: HttpStatus::NOT_FOUND);
+            return new TaskWithTagsResource($task, HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
         }
+    }
 
-        $this->taskService->deleteTask($task);
-        return new SuccessResource(message: 'Задача удалена', statusCode: HttpStatus::OK);
+    /**
+     * Update the specified task
+     * @param TaskRequest $request
+     * @param int $id
+     * @return TaskWithTagsResource|ErrorResource
+     */
+    public function update(TaskRequest $request, int $id): TaskWithTagsResource|ErrorResource
+    {
+        try {
+            $task = $this->taskService->findTask($request->user(), $id);
+            if (!$task) {
+                return $this->taskNotFoundResponse();
+            }
+
+            if (!$this->taskService->updateTask($task, $request->validated())) {
+                return new ErrorResource('Failed to update task', HttpStatus::INTERNAL_SERVER_ERROR);
+            }
+            $task->refresh();
+
+            return new TaskWithTagsResource($task, HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Remove task
+     * @param Request $request
+     * @param int $id
+     *
+     */
+    public function destroy(Request $request, int $id): SuccessResource|ErrorResource
+    {
+        try {
+            $task = $this->taskService->findTask($request->user(), $id);
+
+            if (!$task) {
+                return $this->taskNotFoundResponse();
+            }
+
+            if (!$this->taskService->deleteTask($task)) {
+                return new ErrorResource('Failed to delete task', HttpStatus::INTERNAL_SERVER_ERROR);
+            }
+
+            return new SuccessResource('Task deleted successfully', HttpStatus::OK);
+        } catch (\Exception $e) {
+            return new ErrorResource($e->getMessage(), HttpStatus::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Return a standardized "task not found" response
+     * @return ErrorResource
+     */
+    private function taskNotFoundResponse(): ErrorResource
+    {
+        return new ErrorResource('Task not found or access denied', HttpStatus::NOT_FOUND);
     }
 }

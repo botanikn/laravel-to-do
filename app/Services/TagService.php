@@ -3,34 +3,40 @@
 namespace App\Services;
 
 use App\Models\Tag;
+use App\Models\User;
+use App\Repositories\TagRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class TagService
 {
-    public function getUserTags($user): Collection
+    private $tagRepository;
+    public function __construct(TagRepository $tagRepository)
     {
-        return $user->tags()->get();
+        $this->tagRepository = $tagRepository;
+    }
+    public function getUserTags(User $user): Collection
+    {
+        return $this->tagRepository->getUserTags($user);
     }
 
-    public function createTag($user, array $data): Tag
+    public function createTag(User $user, array $data): Model
     {
-        return $user->tags()->create([
-            'title' => $data['title'],
-        ]);
+        return $this->tagRepository->createTag($user, $data);
     }
 
-    public function findTag($user, $id): ?Tag
+    public function findTag(User $user, int $id): ?Tag
     {
-        return $user->tags()->find($id);
+        return $this->tagRepository->findUserTag($user, $id);
     }
 
     public function updateTag(Tag $tag, array $data): bool
     {
-        return $tag->update($data);
+        return $this->tagRepository->updateTag($tag, $data);
     }
 
     public function deleteTag(Tag $tag): bool
     {
-        return $tag->delete();
+        return $this->tagRepository->deleteTag($tag);
     }
-} 
+}
