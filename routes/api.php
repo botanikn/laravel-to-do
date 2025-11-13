@@ -17,12 +17,10 @@ Route::post('/register', [RegisterController::class, 'register']);
 // Protected routes (require API token)
 Route::middleware(CheckApiToken::class)->group(function () {
     // Task routes
-    Route::apiResource('tasks', TaskController::class)
-        ->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::apiResource('tasks', TaskController::class);
 
     // Tag routes
-    Route::apiResource('tags', TagController::class)
-        ->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::apiResource('tags', TagController::class);
 
     // Task-Tag relationship routes
     Route::prefix('task_tag')->group(function () {
